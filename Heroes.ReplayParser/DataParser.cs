@@ -133,17 +133,11 @@ namespace Heroes.ReplayParser
             ReplayAttributeEvents.Parse(replay, GetMpqFile(archive, ReplayAttributeEvents.FileName));
 
             replay.TrackerEvents = ReplayTrackerEvents.Parse(GetMpqFile(archive, ReplayTrackerEvents.FileName));
-
-            try
-            {
-                replay.GameEvents = new List<GameEvent>();
-                //ReplayGameEvents.Parse(GetMpqFile(archive, ReplayGameEvents.FileName), replay.ClientListByUserID, replay.ReplayBuild);
-                replay.IsGameEventsParsedSuccessfully = true;
-            }
-            catch
-            {
-                replay.GameEvents = new List<GameEvent>();
-            }
+            
+            replay.GameEvents = new List<GameEvent>();
+            //Ignore GameEvents
+            //ReplayGameEvents.Parse(GetMpqFile(archive, ReplayGameEvents.FileName), replay.ClientListByUserID, replay.ReplayBuild);
+            replay.IsGameEventsParsedSuccessfully = true;
 
             // Gather talent selections
             var talentGameEventsDictionary = replay.GameEvents
@@ -159,9 +153,8 @@ namespace Heroes.ReplayParser
             // Replay Server Battlelobby
             if (!ignoreErrors)
                 ReplayServerBattlelobby.GetBattleTags(replay, GetMpqFile(archive, ReplayServerBattlelobby.FileName));
-            // ReplayServerBattlelobby.Parse(replay, GetMpqFile(archive, ReplayServerBattlelobby.FileName));
 
-            // Parse Unit Data using Tracker events
+            // Ignore UnitData
             //Unit.ParseUnitData(replay);
 
             // Parse Statistics
@@ -177,6 +170,7 @@ namespace Heroes.ReplayParser
             }
             finally
             {
+                //Set TrackerEvents to null to minimize size of replay
                 replay.TrackerEvents = null;
                 GC.Collect();
             }
