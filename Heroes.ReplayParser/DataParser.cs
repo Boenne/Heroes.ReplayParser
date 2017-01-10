@@ -129,14 +129,15 @@ namespace Heroes.ReplayParser
 
             // Replay Init Data
             ReplayInitData.Parse(replay, GetMpqFile(archive, ReplayInitData.FileName));
-            
+
             ReplayAttributeEvents.Parse(replay, GetMpqFile(archive, ReplayAttributeEvents.FileName));
 
             replay.TrackerEvents = ReplayTrackerEvents.Parse(GetMpqFile(archive, ReplayTrackerEvents.FileName));
 
             try
             {
-                replay.GameEvents = ReplayGameEvents.Parse(GetMpqFile(archive, ReplayGameEvents.FileName), replay.ClientListByUserID, replay.ReplayBuild);
+                replay.GameEvents = new List<GameEvent>();
+                //ReplayGameEvents.Parse(GetMpqFile(archive, ReplayGameEvents.FileName), replay.ClientListByUserID, replay.ReplayBuild);
                 replay.IsGameEventsParsedSuccessfully = true;
             }
             catch
@@ -144,38 +145,41 @@ namespace Heroes.ReplayParser
                 replay.GameEvents = new List<GameEvent>();
             }
 
-            {
-                // Gather talent selections
-                var talentGameEventsDictionary = replay.GameEvents
-                    .Where(i => i.eventType == GameEventType.CHeroTalentSelectedEvent)
-                    .GroupBy(i => i.player)
-                    .ToDictionary(
-                        i => i.Key,
-                        i => i.Select(j => new Talent { TalentID = (int)j.data.unsignedInt.Value, TimeSpanSelected = j.TimeSpan }).OrderBy(j => j.TimeSpanSelected).ToArray());
+            // Gather talent selections
+            var talentGameEventsDictionary = replay.GameEvents
+                .Where(i => i.eventType == GameEventType.CHeroTalentSelectedEvent)
+                .GroupBy(i => i.player)
+                .ToDictionary(
+                    i => i.Key,
+                    i => i.Select(j => new Talent { TalentID = (int)j.data.unsignedInt.Value, TimeSpanSelected = j.TimeSpan }).OrderBy(j => j.TimeSpanSelected).ToArray());
 
-                foreach (var player in talentGameEventsDictionary.Keys)
-                    player.Talents = talentGameEventsDictionary[player];
-            }
+            foreach (var player in talentGameEventsDictionary.Keys)
+                player.Talents = talentGameEventsDictionary[player];
 
             // Replay Server Battlelobby
             if (!ignoreErrors)
                 ReplayServerBattlelobby.GetBattleTags(replay, GetMpqFile(archive, ReplayServerBattlelobby.FileName));
-                // ReplayServerBattlelobby.Parse(replay, GetMpqFile(archive, ReplayServerBattlelobby.FileName));
+            // ReplayServerBattlelobby.Parse(replay, GetMpqFile(archive, ReplayServerBattlelobby.FileName));
 
             // Parse Unit Data using Tracker events
-            Unit.ParseUnitData(replay);
+            //Unit.ParseUnitData(replay);
 
             // Parse Statistics
-            if (replay.ReplayBuild >= 40431)
-                try
-                {
-                    Statistics.Parse(replay);
-                    replay.IsStatisticsParsedSuccessfully = true;
-                }
-                catch
-                {
-                    replay.IsGameEventsParsedSuccessfully = false;
-                }
+            try
+            {
+                if (replay.ReplayBuild < 40431) return;
+                Statistics.Parse(replay);
+                replay.IsStatisticsParsedSuccessfully = true;
+            }
+            catch
+            {
+                replay.IsGameEventsParsedSuccessfully = false;
+            }
+            finally
+            {
+                replay.TrackerEvents = null;
+                GC.Collect();
+            }
 
             // Replay Message Events
             // ReplayMessageEvents.Parse(replay, GetMpqFile(archive, ReplayMessageEvents.FileName));
