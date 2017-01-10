@@ -5,6 +5,9 @@
 
     public class Replay
     {
+        public string FileName { get; set; }
+        public DateTime FileCreationDate { get; set; }
+
         /// <summary> Gets a list of all messages which took place during the game. </summary>
         public List<Message> Messages { get; set; } = new List<Message>();
 
