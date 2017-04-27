@@ -168,14 +168,8 @@ namespace Heroes.ReplayParser
             // Parse Statistics
             try
             {
-<<<<<<< HEAD
-                if (replay.ReplayBuild < 40431) return;
-                Statistics.Parse(replay);
-                replay.IsStatisticsParsedSuccessfully = true;
-=======
                 replay.GameEvents = ReplayGameEvents.Parse(GetMpqFile(archive, ReplayGameEvents.FileName), replay.ClientListByUserID, replay.ReplayBuild, replay.ReplayVersionMajor);
                 replay.IsGameEventsParsedSuccessfully = true;
->>>>>>> upstream/master
             }
             catch
             {
