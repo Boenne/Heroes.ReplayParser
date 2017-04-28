@@ -166,9 +166,9 @@ namespace Heroes.ReplayParser
             //Unit.ParseUnitData(replay);
 
             // Parse Statistics
-            if (replay.ReplayBuild < 40431) return;
             try
             {
+                if (replay.ReplayBuild < 40431) return;
                 Statistics.Parse(replay);
                 replay.IsStatisticsParsedSuccessfully = true;
             }
