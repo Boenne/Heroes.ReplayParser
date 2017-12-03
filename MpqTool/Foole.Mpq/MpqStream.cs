@@ -1,5 +1,10 @@
-#define WITH_ZLIB
-#define WITH_BZIP
+// Support 4 different decompression libraries: DotNetZip, bzip2.net, SharpCompress, SharpZipLib
+// Listed in order of decreasing performance, SharpZipLib is considerably slower than the others
+//#define WITH_DOTNETZIP
+//#define WITH_BZIP2NET
+//#define WITH_SHARPCOMPRESS
+//#define WITH_SHARPZIPLIB
+
 
 //
 // MpqHuffman.cs
@@ -31,12 +36,6 @@
 //
 using System;
 using System.IO;
-#if WITH_ZLIB
-using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
-#endif
-#if WITH_BZIP
-using ICSharpCode.SharpZipLib.BZip2;
-#endif
 
 namespace Foole.Mpq
 {
@@ -352,15 +351,11 @@ namespace Foole.Mpq
                 case 1: // Huffman
                     return MpqHuffman.Decompress(sinput).ToArray();
                 case 2: // ZLib/Deflate
-#if WITH_ZLIB
                     return ZlibDecompress(sinput, outputLength);
-#endif
                 case 8: // PKLib/Impode
                     return PKDecompress(sinput, outputLength);
                 case 0x10: // BZip2
-#if WITH_BZIP
                     return BZip2Decompress(sinput, outputLength);
-#endif
                 case 0x80: // IMA ADPCM Stereo
                     return MpqWavCompression.Decompress(sinput, 2);
                 case 0x40: // IMA ADPCM Mono
@@ -398,14 +393,33 @@ namespace Foole.Mpq
             }
         }
 
-#if WITH_BZIP
         private static byte[] BZip2Decompress(Stream data, int expectedLength)
         {
-            MemoryStream output = new MemoryStream(expectedLength);
-            BZip2.Decompress(data, output, true);
-            return output.ToArray();
-        }
+            using (MemoryStream output = new MemoryStream(expectedLength))
+            {
+#if WITH_DOTNETZIP
+                using (var stream = new Ionic.BZip2.BZip2InputStream(data, false))
+                {
+                    stream.CopyTo(output);
+                }
+#elif WITH_BZIP2NET
+                using (var stream = new Bzip2.BZip2InputStream(data, false))
+                {
+                    stream.CopyTo(output);
+                }
+#elif WITH_SHARPCOMPRESS
+                using (var stream = new SharpCompress.Compressors.BZip2.BZip2Stream(data, SharpCompress.Compressors.CompressionMode.Decompress))
+                {
+                    stream.CopyTo(output);
+                }
+#elif WITH_SHARPZIPLIB
+                ICSharpCode.SharpZipLib.BZip2.BZip2.Decompress(data, output, true);
+#else
+                throw new NotImplementedException("Please define which compression library you want to use");
 #endif
+                return output.ToArray();
+            }
+        }
 
         private static byte[] PKDecompress(Stream data, int expectedLength)
         {
@@ -413,22 +427,30 @@ namespace Foole.Mpq
             return pk.Explode(expectedLength);
         }
 
-#if WITH_ZLIB
         private static byte[] ZlibDecompress(Stream data, int expectedLength)
         {
-            // This assumes that Zlib won't be used in combination with another compression type
-            byte[] Output = new byte[expectedLength];
-            Stream s = new InflaterInputStream(data);
-            int Offset = 0;
-            while (expectedLength > 0)
+            using (MemoryStream output = new MemoryStream(expectedLength))
             {
-                int size = s.Read(Output, Offset, expectedLength);
-                if (size == 0) break;
-                Offset += size;
-                expectedLength -= size;
-            }
-            return Output;
-        }
+#if WITH_DOTNETZIP
+                using (var stream = new Ionic.Zlib.ZlibStream(data, Ionic.Zlib.CompressionMode.Decompress))
+                {
+                    stream.CopyTo(output);
+                }
+#elif WITH_SHARPCOMPRESS
+                using (var stream = new SharpCompress.Compressors.Deflate.ZlibStream(data, SharpCompress.Compressors.CompressionMode.Decompress))
+                {
+                    stream.CopyTo(output);
+                }
+#elif WITH_SHARPZIPLIB
+                using (var stream = new ICSharpCode.SharpZipLib.Zip.Compression.Streams.InflaterInputStream(data))
+                {
+                    stream.CopyTo(output);
+                }
+#else
+                throw new NotImplementedException("Please define which compression library you want to use");
 #endif
+                return output.ToArray();
+            }
+        }
     }
 }

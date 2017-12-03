@@ -128,7 +128,7 @@
                 reader.Read(3);
 
                 var maxUsers = reader.Read(5);
-                if (maxUsers != 10) // Max Players
+                if (maxUsers != 10 && replay.GameMode != GameMode.Brawl) // Max Players
                     replay.GameMode = GameMode.TryMe;
 
                 reader.Read(5); // Max Observers
@@ -136,7 +136,12 @@
                 reader.Read(4); // + 1 = Max Teams
                 reader.Read(6); // Max Colors
                 reader.Read(8); // + 1 = Max Races
-                reader.Read(8); // Max Controls
+
+				// Max Controls
+				if(replay.ReplayBuild < 59279)
+					reader.Read(8);
+				else
+					reader.Read(4);
 
                 replay.MapSize = new Point { X = (int)reader.Read(8), Y = (int)reader.Read(8) };
                 if (replay.MapSize.Y == 1)
@@ -160,8 +165,14 @@
                     reader.ReadBitArray(reader.Read(6)); // m_allowedColors
                     reader.ReadBitArray(reader.Read(8)); // m_allowedRaces
                     reader.ReadBitArray(reader.Read(6)); // m_allowedDifficulty
-                    reader.ReadBitArray(reader.Read(8)); // m_allowedControls
-                    reader.ReadBitArray(reader.Read(2)); // m_allowedObserveTypes
+
+					// m_allowedControls
+					if(replay.ReplayBuild < 59279)
+						reader.ReadBitArray(reader.Read(8));
+					else
+						reader.ReadBitArray(reader.Read(4));
+
+					reader.ReadBitArray(reader.Read(2)); // m_allowedObserveTypes
                     reader.ReadBitArray(reader.Read(7)); // m_allowedAIBuilds
                 }
 
@@ -246,7 +257,7 @@
                     reader.ReadBlobPrecededWithLength(7); // m_toonHandle
 
                     // m_licenses
-                    if (replay.ReplayBuild < 49582)
+                    if (replay.ReplayBuild < 49582 || replay.ReplayBuild == 49838)
                     {
                         var licensesLength = reader.Read(9);
                         for (var j = 0; j < licensesLength; j++)

@@ -120,6 +120,26 @@ namespace Heroes.ReplayParser
         /// </summary>
         public Dictionary<string, int> MiscellaneousScoreResultEventDictionary { get; set; } = new Dictionary<string, int>();
 
+        /// <summary>
+        /// Gets or sets the player's collection, no longer available since 56175
+        /// </summary>
+        public Dictionary<string, bool> PlayerCollectionDictionary { get; set; } = new Dictionary<string, bool>();
+
+        /// <summary>
+        /// Gets or sets the the player's party (same value, same party)
+        /// </summary>
+        public long PartyValue { get; set; }
+
+        /// <summary>
+        /// Gets or sets the player's TId (alternative to battletag)
+        /// </summary>
+        public string BattleNetTId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the player's account level
+        /// </summary>
+        public int AccountLevel { get; set; }
+
         public bool HasScoreResult()
         {
             return ScoreResult.ExperienceContribution != 0 ||
@@ -251,6 +271,7 @@ namespace Heroes.ReplayParser
         // Lost Cavern = 1011 - No map award
         MostDamageDoneToZerg = 1012,
         MostNukeDamageDone = 1013,
-		MostTimePushing = 1016
-    }
+		MostTimePushing = 1016,
+		MostTimeOnPoint = 1019
+	}
 }
