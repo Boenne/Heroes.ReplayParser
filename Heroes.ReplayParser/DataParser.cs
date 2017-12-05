@@ -63,7 +63,7 @@ namespace Heroes.ReplayParser
             }
         }
 
-        public static Tuple<ReplayParseResult, Replay> ParseReplay(string fileName, bool ignoreErrors, bool deleteFile, bool allowPTRRegion = false)
+        public static Tuple<ReplayParseResult, Replay> ParseReplay(string fileName, bool throwExceptions, bool ignoreErrors, bool deleteFile, bool allowPTRRegion = false)
         {
             try
             {
@@ -85,6 +85,8 @@ namespace Heroes.ReplayParser
             }
             catch
             {
+                if(throwExceptions)
+                    throw;
                 return new Tuple<ReplayParseResult, Replay>(ReplayParseResult.Exception, null);
             }
         }
